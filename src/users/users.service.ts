@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -37,5 +38,16 @@ export class UsersService {
 
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email }).exec();
+  }
+
+  async findById(userId: string): Promise<User> {
+    const user = await this.userModel
+      .findById(userId)
+      .select('-password')
+      .exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 }
