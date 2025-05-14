@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  BadRequestException,
+} from '@nestjs/common';
 import * as request from 'supertest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { Connection, connect, Model } from 'mongoose';
@@ -7,6 +11,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { AppModule } from '../app.module';
 import { User, UserSchema } from './schemas/user.schema';
 import * as bcrypt from 'bcrypt';
+import { ValidationExceptionFilter } from '../common/filters/validation-exception.filter';
 
 interface RegisterResponse {
   message: string;
@@ -19,10 +24,12 @@ interface UserRegistrationData {
   [key: string]: any; // For any additional fields
 }
 
-interface RegisterResponseError {
-  message: string[];
+interface ValidationErrorResponse {
   statusCode: number;
   error: string;
+  validationErrors: {
+    [field: string]: string[];
+  };
 }
 
 describe('UsersController (e2e)', () => {
@@ -49,7 +56,21 @@ describe('UsersController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        stopAtFirstError: true,
+        groups: ['existence', 'format'],
+        exceptionFactory: (errors) => {
+          return new BadRequestException(errors);
+        },
+      }),
+    );
+
+    // Apply the custom ValidationExceptionFilter
+    app.useGlobalFilters(new ValidationExceptionFilter());
     await app.init();
   });
 
@@ -173,12 +194,20 @@ describe('UsersController (e2e)', () => {
             .send(testData)
             .expect(400);
 
-          const responseBody = response.body as RegisterResponseError;
-          const errors = responseBody.message;
+          // Update to match the new validation error response format
+
+          const responseBody = response.body as ValidationErrorResponse;
+
+          // Check that we have the validation errors object
+          expect(responseBody).toHaveProperty('validationErrors');
+
+          // Check that the specific field has validation errors
+          expect(responseBody.validationErrors).toHaveProperty(field);
 
           // Check that the specific error message is included
+          const fieldErrors = responseBody.validationErrors[field];
           expect(
-            errors.some((err) => err.includes(expectedError)),
+            fieldErrors.some((err) => err.includes(expectedError)),
           ).toBeTruthy();
         },
       );
