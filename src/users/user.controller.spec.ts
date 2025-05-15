@@ -105,10 +105,10 @@ describe('UsersController (e2e)', () => {
     password: 'Password123!', // Meets all validation rules
   };
 
-  describe('/users/register (POST)', () => {
+  describe('/api/users/register (POST)', () => {
     it('should register a new user with valid data', async () => {
       const response = await request(app.getHttpServer())
-        .post('/users/register')
+        .post('/api/users/register')
         .send(validRegistrationData)
         .expect(201);
 
@@ -141,7 +141,7 @@ describe('UsersController (e2e)', () => {
 
       // Now try to register with the same email
       const response = await request(app.getHttpServer())
-        .post('/users/register')
+        .post('/api/users/register')
         .send(validRegistrationData)
         .expect(409); // Conflict
 
@@ -190,7 +190,7 @@ describe('UsersController (e2e)', () => {
           };
 
           const response = await request(app.getHttpServer())
-            .post('/users/register')
+            .post('/api/users/register')
             .send(testData)
             .expect(400);
 
@@ -220,7 +220,7 @@ describe('UsersController (e2e)', () => {
         };
 
         const response = await request(app.getHttpServer())
-          .post('/users/register')
+          .post('/api/users/register')
           .send(validData)
           .expect(201);
 

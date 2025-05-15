@@ -100,7 +100,7 @@ describe('AuthController (e2e)', () => {
     return savedUser;
   };
 
-  describe('/auth/login (POST)', () => {
+  describe('/api/auth/login (POST)', () => {
     const testUser = {
       name: 'Test User',
       email: 'test@example.com',
@@ -118,7 +118,7 @@ describe('AuthController (e2e)', () => {
       };
 
       const response = await request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send(credentials)
         .expect(201);
 
@@ -130,7 +130,7 @@ describe('AuthController (e2e)', () => {
 
     it('should fail login with incorrect password', async () => {
       await request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({
           email: testUser.email,
           password: 'WrongPassword123!',
@@ -140,7 +140,7 @@ describe('AuthController (e2e)', () => {
 
     it('should fail login with non-existent email', async () => {
       await request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({
           email: 'nonexistent@example.com',
           password: testUser.password,
@@ -150,7 +150,7 @@ describe('AuthController (e2e)', () => {
 
     it('should validate email format', async () => {
       const response = await request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({
           email: 'not-an-email',
           password: testUser.password,
@@ -183,7 +183,7 @@ describe('AuthController (e2e)', () => {
 
     it('should require email and password', async () => {
       const response = await request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({})
         .expect(400);
 
@@ -216,7 +216,7 @@ describe('AuthController (e2e)', () => {
       beforeEach(async () => {
         // Login to get a valid token
         const loginResponse = await request(app.getHttpServer())
-          .post('/auth/login')
+          .post('/api/auth/login')
           .send({
             email: testUser.email,
             password: testUser.password,
@@ -236,7 +236,7 @@ describe('AuthController (e2e)', () => {
 
       it('should access profile with valid token', async () => {
         const response = await request(app.getHttpServer())
-          .get('/auth/me')
+          .get('/api/auth/me')
           .set('Authorization', `Bearer ${authToken}`)
           .expect(200);
 
@@ -247,12 +247,12 @@ describe('AuthController (e2e)', () => {
       });
 
       it('should reject requests without token', async () => {
-        await request(app.getHttpServer()).get('/auth/me').expect(401);
+        await request(app.getHttpServer()).get('/api/auth/me').expect(401);
       });
 
       it('should reject requests with invalid token', async () => {
         await request(app.getHttpServer())
-          .get('/auth/me')
+          .get('/api/auth/me')
           .set('Authorization', 'Bearer invalid-token')
           .expect(401);
       });
